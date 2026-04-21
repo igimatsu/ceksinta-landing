@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CekSINTA — Upgrade Pro</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      background:#F0FDF9;min-height:100vh;
+      display:flex;align-items:flex-start;justify-content:center;
+      padding:32px 16px;
+    }
+    .card{
+      background:#fff;border-radius:20px;border:1px solid #D1FAE5;
+      width:100%;max-width:460px;overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,.06);
+    }
+    .header{
+      background:linear-gradient(135deg,#0D9488,#059669);
+      padding:20px 24px;display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:38px;height:38px;border-radius:10px;
+      background:rgba(255,255,255,.2);
+      display:flex;align-items:center;justify-content:center;
+      font-size:14px;font-weight:700;color:#fff;letter-spacing:-.5px;
+    }
+    .header-text .title{font-size:16px;font-weight:700;color:#fff}
+    .header-text .sub{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px}
+    .body{padding:24px}
+
+    /* Paket tabs */
+    .plan-tabs{display:flex;gap:6px;margin-bottom:20px;background:#F9FAFB;padding:5px;border-radius:12px}
+    .plan-tab{
+      flex:1;padding:9px 6px;border-radius:9px;border:none;background:none;
+      font-size:12px;font-weight:600;color:#6B7280;cursor:pointer;transition:all .2s;
+      font-family:inherit;text-align:center;line-height:1.3;
+    }
+    .plan-tab.active{background:#fff;color:#0D9488;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+    /* Plan detail */
+    .plan-detail{
+      border:2px solid #D1FAE5;border-radius:14px;padding:18px;
+      margin-bottom:20px;background:#F0FDF9;
+    }
+    .plan-detail-name{font-size:18px;font-weight:700;color:#111827;margin-bottom:2px}
+    .plan-detail-target{font-size:12px;color:#6B7280;margin-bottom:14px}
+    .plan-prices{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+    .price-opt{
+      flex:1;min-width:110px;border:1.5px solid #E5E7EB;border-radius:10px;
+      padding:10px 12px;cursor:pointer;transition:all .15s;background:#fff;
+      position:relative;
+    }
+    .price-opt:hover{border-color:#0D9488}
+    .price-opt.selected{border-color:#0D9488;background:#F0FDF9}
+    .price-opt .po-period{font-size:10px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+    .price-opt .po-amount{font-size:20px;font-weight:700;color:#0D9488;line-height:1.2;margin:3px 0}
+    .price-opt .po-note{font-size:10px;color:#6B7280}
+    .price-opt .po-badge{
+      position:absolute;top:-8px;right:8px;
+      background:#F59E0B;color:#fff;font-size:9px;font-weight:700;
+      padding:2px 7px;border-radius:99px;
+    }
+    .plan-features{display:flex;flex-direction:column;gap:7px}
+    .pf{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#374151}
+    .pf-check{
+      width:16px;height:16px;border-radius:50%;background:#E1F5EE;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+    }
+    .pf.dim{color:#9CA3AF}
+    .pf.dim .pf-check{background:#F3F4F6}
+
+    hr{border:none;border-top:1px solid #F3F4F6;margin:18px 0}
+
+    /* Payment buttons */
+    .pay-label{font-size:13px;font-weight:700;color:#111827;margin-bottom:12px}
+    .pay-primary{
+      width:100%;padding:15px;border-radius:12px;border:none;
+      background:linear-gradient(135deg,#0D9488,#059669);color:#fff;
+      font-size:15px;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      margin-bottom:10px;font-family:inherit;
+      box-shadow:0 4px 12px rgba(13,148,136,.3);
+      transition:all .2s;
+    }
+    .pay-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(13,148,136,.4)}
+    .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .pay-sec{
+      padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;
+      background:#fff;font-size:13px;font-weight:600;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      font-family:inherit;color:#374151;transition:all .15s;
+    }
+    .pay-sec:hover{border-color:#0D9488;background:#F0FDF9}
+    .pay-icon{
+      width:22px;height:22px;border-radius:5px;background:#E5E7EB;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;color:#374151;flex-shrink:0;
+    }
+    .note{font-size:10px;color:#9CA3AF;text-align:center;margin-top:12px;line-height:1.6}
+    .note a{color:#0D9488;text-decoration:none}
+
+    /* Total bar */
+    .total-bar{
+      background:#F0FDF9;border:1px solid #D1FAE5;border-radius:10px;
+      padding:12px 16px;display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:16px;
+    }
+    .total-label{font-size:12px;color:#6B7280}
+    .total-amount{font-size:20px;font-weight:800;color:#0D9488}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="logo">Ck</div>
+    <div class="header-text">
+      <div class="title">CekSINTA Pro</div>
+      <div class="sub">Aktif otomatis setelah bayar — tidak perlu daftar akun</div>
+    </div>
+  </div>
+  <div class="body">
+
+    <!-- Tab pilih paket -->
+    <div class="plan-tabs">
+      <button class="plan-tab" id="tab-scholar"     onclick="switchPlan('scholar')">Scholar</button>
+      <button class="plan-tab" id="tab-researcher"  onclick="switchPlan('researcher')">Researcher</button>
+      <button class="plan-tab" id="tab-dosenpro"    onclick="switchPlan('dosenpro')">Dosen Pro</button>
+    </div>
+
+    <!-- Detail paket -->
+    <div class="plan-detail">
+      <div class="plan-detail-name" id="planName">—</div>
+      <div class="plan-detail-target" id="planTarget">—</div>
+
+      <!-- Opsi harga: bulanan / semester / tahunan -->
+      <div class="plan-prices" id="planPrices"></div>
+
+      <!-- Fitur -->
+      <div class="plan-features" id="planFeatures"></div>
+    </div>
+
+    <!-- Total -->
+    <div class="total-bar">
+      <span class="total-label">Total yang dibayarkan</span>
+      <span class="total-amount" id="totalAmount">—</span>
+    </div>
+
+    <hr>
+
+    <div class="pay-label">Pilih cara bayar</div>
+    <button class="pay-primary" onclick="pay('qris')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="white" stroke-width="1.5"/>
+        <rect x="4" y="4" width="3" height="3" fill="white"/>
+        <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="white" stroke-width="1.5"/>
+        <rect x="13" y="4" width="3" height="3" fill="white"/>
+        <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="white" stroke-width="1.5"/>
+        <rect x="4" y="13" width="3" height="3" fill="white"/>
+        <rect x="11" y="11" width="3" height="3" fill="white"/>
+        <rect x="16" y="11" width="3" height="3" fill="white"/>
+        <rect x="11" y="16" width="3" height="3" fill="white"/>
+        <rect x="16" y="16" width="3" height="3" fill="white"/>
+      </svg>
+      Bayar dengan QRIS (GoPay, OVO, Dana)
+    </button>
+    <div class="pay-grid">
+      <button class="pay-sec" onclick="pay('va')">
+        <div class="pay-icon">VA</div> Transfer Bank
+      </button>
+      <button class="pay-sec" onclick="pay('alfamart')">
+        <div class="pay-icon">★</div> Indomaret/Alfamart
+      </button>
+    </div>
+    <p class="note">
+      Pembayaran aman via <a href="https://midtrans.com" target="_blank">Midtrans</a> (lisensi Bank Indonesia).<br>
+      Pro aktif &lt; 1 menit setelah bayar. Garansi refund 7 hari.
+    </p>
+  </div>
+</div>
+
+<script>
+// ── DATA PAKET ──
+const PLANS = {
+  scholar: {
+    name: 'Scholar',
+    target: 'Mahasiswa S1 — skripsi & tugas akhir',
+    prices: [
+      { id:'monthly',  label:'Bulanan',  amount:15000,  display:'Rp 15.000', note:'per bulan' },
+      { id:'semester', label:'Semester', amount:49000,  display:'Rp 49.000', note:'6 bulan', badge:'Hemat 1 bln' },
+      { id:'yearly',   label:'Tahunan',  amount:119000, display:'Rp 119.000',note:'12 bulan', badge:'Hemat 3 bln' },
+    ],
+    features: [
+      'Badge S1–S6 (FORGE) & Q1–Q4 (ATLAS)',
+      'RAPTOR: 3 dari 7 sinyal predator',
+      'Bookmark hingga 50 jurnal (VAULT)',
+      'Riwayat pencarian 30 hari',
+      'Export CSV 1×/bulan (maks 25 baris)',
+      { text:'PRISM AI search', dim:true },
+      { text:'Transparency report penuh', dim:true },
+      { text:'Export unlimited', dim:true },
+    ],
+  },
+  researcher: {
+    name: 'Researcher',
+    target: 'Mahasiswa S2/S3 & dosen riset',
+    prices: [
+      { id:'monthly',  label:'Bulanan',  amount:29000,  display:'Rp 29.000', note:'per bulan' },
+      { id:'semester', label:'Semester', amount:89000,  display:'Rp 89.000', note:'6 bulan', badge:'Hemat 1 bln' },
+      { id:'yearly',   label:'Tahunan',  amount:229000, display:'Rp 229.000',note:'12 bulan', badge:'Hemat 2,5 bln' },
+    ],
+    features: [
+      'Semua fitur Scholar',
+      'RAPTOR full 7 sinyal + transparency report',
+      'VAULT unlimited bookmark',
+      'Riwayat pencarian 365 hari',
+      'Export CSV unlimited',
+      'PRISM AI search 30 query/bulan',
+      'Laporkan jurnal predator (crowdsource)',
+    ],
+  },
+  dosenpro: {
+    name: 'Dosen Pro',
+    target: 'Dosen aktif publikasi & pengajuan hibah',
+    prices: [
+      { id:'monthly',  label:'Bulanan',  amount:49000,  display:'Rp 49.000', note:'per bulan' },
+      { id:'semester', label:'Semester', amount:149000, display:'Rp 149.000',note:'6 bulan', badge:'Hemat 1 bln' },
+      { id:'yearly',   label:'Tahunan',  amount:399000, display:'Rp 399.000',note:'12 bulan', badge:'Hemat 2 bln' },
+    ],
+    features: [
+      'Semua fitur Researcher',
+      'PRISM AI search unlimited',
+      'Badge "Dosen Terverifikasi"',
+      'Bobot vote 3× di RAPTOR crowdsource',
+      'Export PDF laporan jurnal',
+      'Priority database update',
+      'Verifikasi via email .ac.id',
+    ],
+  },
+};
+
+// ── STATE ──
+const params    = new URLSearchParams(window.location.search);
+const initPlan  = params.get('plan') || 'researcher';
+// Buat uid jika tidak ada — ini penting agar tidak error di qr.html
+const uid = params.get('uid') || ('usr_' + Date.now() + '_' + Math.random().toString(36).slice(2,8));
+
+let currentPlan    = initPlan in PLANS ? initPlan : 'researcher';
+let currentPriceId = 'monthly';
+
+function switchPlan(planId) {
+  currentPlan = planId;
+  currentPriceId = 'monthly'; // reset ke bulanan
+  renderPlan();
+  // update tab aktif
+  ['scholar','researcher','dosenpro'].forEach(id => {
+    document.getElementById('tab-'+id).classList.toggle('active', id === planId);
+  });
+}
+
+function selectPrice(priceId) {
+  currentPriceId = priceId;
+  renderPrices();
+  renderTotal();
+}
+
+function renderPlan() {
+  const p = PLANS[currentPlan];
+  document.getElementById('planName').textContent   = p.name;
+  document.getElementById('planTarget').textContent = p.target;
+  renderPrices();
+  renderFeatures();
+  renderTotal();
+}
+
+function renderPrices() {
+  const p    = PLANS[currentPlan];
+  const html = p.prices.map(pr => `
+    <div class="price-opt ${pr.id === currentPriceId ? 'selected' : ''}" onclick="selectPrice('${pr.id}')">
+      ${pr.badge ? `<div class="po-badge">${pr.badge}</div>` : ''}
+      <div class="po-period">${pr.label}</div>
+      <div class="po-amount">${pr.display}</div>
+      <div class="po-note">${pr.note}</div>
+    </div>
+  `).join('');
+  document.getElementById('planPrices').innerHTML = html;
+}
+
+function renderFeatures() {
+  const p    = PLANS[currentPlan];
+  const html = p.features.map(f => {
+    const dim  = typeof f === 'object' && f.dim;
+    const text = typeof f === 'object' ? f.text : f;
+    return `<div class="pf ${dim?'dim':''}">
+      <div class="pf-check">
+        <svg width="9" height="9" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2 4-4" stroke="${dim?'#9CA3AF':'#085041'}" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+      </div>
+      <span>${text}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('planFeatures').innerHTML = html;
+}
+
+function renderTotal() {
+  const p    = PLANS[currentPlan];
+  const pr   = p.prices.find(x => x.id === currentPriceId);
+  document.getElementById('totalAmount').textContent = pr.display;
+}
+
+function getSelectedPrice() {
+  return PLANS[currentPlan].prices.find(x => x.id === currentPriceId);
+}
+
+function pay(method) {
+  const pr      = getSelectedPrice();
+  const orderId = `ceksinta_${currentPlan}_${currentPriceId}_${uid}_${Date.now()}`;
+  const url     = `qr.html?uid=${encodeURIComponent(uid)}&plan=${currentPlan}&price_id=${currentPriceId}&order_id=${encodeURIComponent(orderId)}&amount=${pr.amount}&method=${method}`;
+  window.location.href = url;
+}
+
+// Init
+switchPlan(currentPlan);
+</script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CekSINTA — Pembayaran Berhasil</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:#F0FDF9;min-height:100vh;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:24px 16px;
+    }
+    .card{
+      background:#fff;border-radius:20px;border:1px solid #D1FAE5;
+      width:100%;max-width:400px;overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,.06);
+    }
+    .top{text-align:center;padding:32px 24px 16px}
+    .icon-circle{
+      width:72px;height:72px;border-radius:50%;background:#E1F5EE;
+      display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
+    }
+    .icon-circle.pending{background:#FEF3C7}
+    .main-title{font-size:20px;font-weight:800;color:#111827;margin-bottom:6px}
+    .main-sub{font-size:13px;color:#6B7280;line-height:1.5}
+    .details{
+      background:#F0FDF9;border-radius:12px;
+      margin:0 20px 16px;padding:14px 16px;
+      border:1px solid #D1FAE5;
+    }
+    .d-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:5px 0;font-size:12px;
+      border-bottom:1px solid #E8FDF5;
+    }
+    .d-row:last-child{border-bottom:none}
+    .d-key{color:#6B7280}
+    .d-val{font-weight:600;color:#111827}
+    .d-val.green{color:#0D9488}
+    .d-val.amber{color:#D97706}
+
+    .pending-box{
+      margin:0 20px 16px;padding:12px 14px;
+      background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;
+    }
+    .pb-title{font-size:12px;font-weight:700;color:#92400E;margin-bottom:4px}
+    .pb-desc{font-size:11px;color:#B45309;line-height:1.5}
+
+    .google-prompt{
+      margin:0 20px 12px;padding:12px 14px;
+      background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;
+    }
+    .gp-title{font-size:12px;font-weight:700;color:#1E40AF;margin-bottom:3px}
+    .gp-desc{font-size:11px;color:#3B82F6;line-height:1.4}
+
+    .instruction{
+      margin:0 20px 16px;padding:12px 14px;
+      background:#E1F5EE;border:1px solid #A7F3D0;border-radius:10px;
+    }
+    .ins-title{font-size:12px;font-weight:700;color:#085041;margin-bottom:3px}
+    .ins-desc{font-size:11px;color:#0F6E56;line-height:1.5}
+
+    .btn-wrap{padding:0 20px 20px}
+    .btn{
+      width:100%;padding:13px;border-radius:10px;
+      font-size:13px;font-weight:700;cursor:pointer;
+      border:none;font-family:inherit;margin-bottom:8px;
+    }
+    .btn-primary{background:linear-gradient(135deg,#0D9488,#059669);color:#fff}
+    .btn-google{
+      background:#fff;color:#374151;border:1.5px solid #D1D5DB;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+    }
+    .btn-ghost{
+      background:none;border:none;color:#9CA3AF;
+      font-size:11px;padding:4px;text-align:center;width:100%;cursor:pointer;
+      font-family:inherit;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="top">
+    <div class="icon-circle" id="iconCircle">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <path d="M8 18l7 7 13-14" stroke="#0D9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="main-title" id="mainTitle">Pembayaran berhasil!</div>
+    <div class="main-sub"  id="mainSub">CekSINTA Pro sudah aktif di browser kamu</div>
+  </div>
+
+  <div class="details" id="detailsBox">
+    <div class="d-row"><span class="d-key">Paket</span><span class="d-val" id="dPlan">—</span></div>
+    <div class="d-row"><span class="d-key">Periode</span><span class="d-val" id="dPeriod">—</span></div>
+    <div class="d-row"><span class="d-key">Nominal</span><span class="d-val" id="dAmount">—</span></div>
+    <div class="d-row"><span class="d-key">Berlaku hingga</span><span class="d-val" id="dExpiry">—</span></div>
+    <div class="d-row"><span class="d-key">Status</span><span class="d-val green" id="dStatus">Aktif</span></div>
+  </div>
+
+  <div class="pending-box" id="pendingBox" style="display:none">
+    <div class="pb-title">Menunggu konfirmasi pembayaran</div>
+    <div class="pb-desc">Jika sudah transfer/bayar, Pro aktif otomatis dalam 1–5 menit. Halaman ini akan update sendiri.</div>
+  </div>
+
+  <div class="google-prompt" id="googlePrompt" style="display:none">
+    <div class="gp-title">Lindungi akun Pro kamu</div>
+    <div class="gp-desc">Login Google agar Pro tidak hilang saat reinstall Chrome atau ganti perangkat.</div>
+  </div>
+
+  <div class="instruction">
+    <div class="ins-title">Ekstensi sudah diperbarui otomatis</div>
+    <div class="ins-desc">Tutup halaman ini dan kembali ke Google Scholar atau Garuda. Badge unlimited sudah aktif — tidak perlu restart browser.</div>
+  </div>
+
+  <div class="btn-wrap">
+    <div id="googleSection" style="display:none">
+      <button class="btn btn-google" onclick="handleGoogleLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Simpan dengan akun Google
+      </button>
+      <button class="btn-ghost" onclick="skipGoogle()">Lanjut tanpa akun →</button>
+    </div>
+    <button class="btn btn-primary" id="btnClose" style="display:none" onclick="window.close()">
+      Tutup & kembali ke Scholar
+    </button>
+  </div>
+</div>
+
+<script>
+const API_BASE = "https://ceksinta-api.igimatsu.workers.dev";
+
+const PLAN_LABELS   = { scholar:'Scholar', researcher:'Researcher', dosenpro:'Dosen Pro' };
+const PERIOD_LABELS = { monthly:'Bulanan', semester:'Semester (6 bln)', yearly:'Tahunan (12 bln)' };
+const PERIOD_MONTHS = { monthly:1, semester:6, yearly:12 };
+
+const params  = new URLSearchParams(window.location.search);
+const uid     = params.get('uid')      || '';
+const plan    = params.get('plan')     || 'researcher';
+const priceId = params.get('price_id') || 'monthly';
+const orderId = params.get('order_id') || '';
+const amount  = parseInt(params.get('amount') || '0');
+const status  = params.get('status')   || 'success';
+
+function init() {
+  document.getElementById('dPlan').textContent   = PLAN_LABELS[plan]    || plan;
+  document.getElementById('dPeriod').textContent = PERIOD_LABELS[priceId] || priceId;
+  document.getElementById('dAmount').textContent = amount ? 'Rp ' + amount.toLocaleString('id-ID') : '—';
+
+  // Hitung tanggal berlaku
+  const months = PERIOD_MONTHS[priceId] || 1;
+  const expiry = new Date();
+  expiry.setMonth(expiry.getMonth() + months);
+  document.getElementById('dExpiry').textContent = expiry.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+
+  if (status === 'pending') {
+    document.getElementById('mainTitle').textContent   = 'Menunggu pembayaran';
+    document.getElementById('mainSub').textContent     = 'Selesaikan pembayaran untuk aktifkan Pro';
+    document.getElementById('iconCircle').classList.add('pending');
+    document.getElementById('pendingBox').style.display = 'block';
+    document.getElementById('detailsBox').style.display = 'none';
+    document.getElementById('dStatus').textContent      = 'Pending';
+    document.getElementById('dStatus').classList.remove('green');
+    document.getElementById('dStatus').classList.add('amber');
+    startPolling();
+  } else {
+    document.getElementById('googlePrompt').style.display = 'block';
+    document.getElementById('googleSection').style.display = 'block';
+    document.getElementById('btnClose').style.display = 'block';
+    notifyExtension();
+  }
+}
+
+function startPolling() {
+  let tries = 0;
+  const poll = setInterval(async () => {
+    tries++;
+    try {
+      const res  = await fetch(`${API_BASE}/v1/status?uid=${encodeURIComponent(uid)}`);
+      const data = await res.json();
+      if (data.is_pro) {
+        clearInterval(poll);
+        document.getElementById('mainTitle').textContent   = 'Pembayaran berhasil!';
+        document.getElementById('mainSub').textContent     = 'CekSINTA Pro sudah aktif';
+        document.getElementById('pendingBox').style.display = 'none';
+        document.getElementById('detailsBox').style.display = 'block';
+        document.getElementById('googlePrompt').style.display = 'block';
+        document.getElementById('googleSection').style.display = 'block';
+        document.getElementById('btnClose').style.display = 'block';
+        document.getElementById('iconCircle').classList.remove('pending');
+        notifyExtension();
+      }
+    } catch {}
+    if (tries > 100) clearInterval(poll);
+  }, 3000);
+}
+
+function notifyExtension() {
+  try { chrome.runtime?.sendMessage({ type:'PRO_ACTIVATED', uid, plan }).catch(()=>{}); } catch {}
+}
+
+function skipGoogle() {
+  document.getElementById('googleSection').style.display = 'none';
+  document.getElementById('googlePrompt').style.display  = 'none';
+}
+
+function handleGoogleLogin() {
+  const email = prompt('Masukkan email Google kamu:');
+  if (email && email.includes('@')) {
+    fetch(`${API_BASE}/v1/google-login`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ uid, email }),
+    }).then(() => {
+      skipGoogle();
+      const ok = document.createElement('div');
+      ok.style.cssText = 'background:#E1F5EE;color:#085041;border-radius:8px;padding:10px 14px;font-size:12px;margin:0 20px 12px;';
+      ok.textContent = '✓ Email tersimpan: ' + email;
+      document.getElementById('btnClose').parentNode.prepend(ok);
+    }).catch(() => alert('Gagal menyimpan email, coba lagi.'));
+  }
+}
+
+init();
+</script>
+</body>
+</html>
