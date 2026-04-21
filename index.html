@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CekSINTA — Validator Jurnal Terakreditasi Indonesia</title>
+<meta name="description" content="Ekstensi Chrome yang otomatis menampilkan badge SINTA S1–S6 dan Scopus Q1–Q4 langsung di Google Scholar dan Garuda. Gratis untuk semua peneliti Indonesia."/>
+<meta property="og:title" content="CekSINTA — Validator Jurnal Terakreditasi"/>
+<meta property="og:description" content="Cek akreditasi jurnal SINTA dan Scopus seketika. Tanpa copy-paste, tanpa buka tab baru."/>
+<meta property="og:type" content="website"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --teal:#00D4A0;
+  --teal2:#00FFB2;
+  --teal-dim:rgba(0,212,160,.12);
+  --teal-glow:rgba(0,212,160,.25);
+  --ink:#03080A;
+  --surface:#080F0C;
+  --card:#0C1610;
+  --card2:#101C17;
+  --border:rgba(0,212,160,.15);
+  --border2:rgba(0,212,160,.08);
+  --muted:#4D7A68;
+  --muted2:#2E4D3E;
+  --text:#C8E8DC;
+  --text2:#7AAD96;
+  --white:#EDFAF4;
+  --red:#FF5A5A;
+  --amber:#FFB800;
+  --blue:#5B9EFF;
+  --r-sm:8px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--ink);
+  color:var(--text);
+  overflow-x:hidden;
+  line-height:1.7;
+}
+
+/* ── CANVAS BG ── */
+#bg-canvas{
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;opacity:.6;
+}
+
+/* ── CURSOR GLOW ── */
+.cursor-glow{
+  position:fixed;width:400px;height:400px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,160,.06) 0%,transparent 70%);
+  pointer-events:none;z-index:1;
+  transform:translate(-50%,-50%);
+  transition:transform .08s linear;
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,5vw,80px);
+  height:64px;
+  background:rgba(3,8,10,.75);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border2);
+  transition:border-color .3s;
+}
+nav.scrolled{border-bottom-color:var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-sq{
+  width:32px;height:32px;border-radius:7px;
+  background:var(--teal);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  color:var(--ink);letter-spacing:-.5px;
+  box-shadow:0 0 16px var(--teal-glow);
+}
+.nav-logo-text{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--white)}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--white)}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 20px;border-radius:var(--r-sm);
+  background:var(--teal);color:var(--ink);
+  font-size:13px;font-weight:600;
+  text-decoration:none;
+  box-shadow:0 0 20px var(--teal-glow);
+  transition:all .2s;
+}
+.nav-cta:hover{background:var(--teal2);transform:translateY(-1px);box-shadow:0 0 32px var(--teal-glow)}
+.nav-cta svg{width:14px;height:14px}
+
+/* ── SECTIONS ── */
+section{position:relative;z-index:2}
+.container{max-width:1100px;margin:0 auto;padding:0 clamp(20px,5vw,60px)}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:120px clamp(20px,5vw,60px) 80px;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:99px;
+  border:1px solid var(--border);
+  background:var(--teal-dim);
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  color:var(--teal);letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:28px;
+  opacity:0;animation:fadeUp .6s .1s forwards;
+}
+.hero-eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+.hero h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(42px,7vw,88px);
+  font-weight:800;
+  line-height:1.05;
+  letter-spacing:-2px;
+  color:var(--white);
+  max-width:820px;
+  margin-bottom:24px;
+  opacity:0;animation:fadeUp .7s .2s forwards;
+}
+.hero h1 em{
+  font-style:normal;
+  color:var(--teal);
+  text-shadow:0 0 40px var(--teal-glow);
+}
+.hero-sub{
+  font-size:clamp(16px,2vw,20px);font-weight:300;
+  color:var(--text2);max-width:560px;
+  margin-bottom:48px;
+  opacity:0;animation:fadeUp .7s .3s forwards;
+}
+.hero-actions{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center;
+  opacity:0;animation:fadeUp .7s .4s forwards;
+}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 28px;border-radius:var(--r-md);
+  background:var(--teal);color:var(--ink);
+  font-size:15px;font-weight:600;
+  text-decoration:none;
+  box-shadow:0 0 32px var(--teal-glow),0 4px 20px rgba(0,0,0,.4);
+  transition:all .25s;
+}
+.btn-primary:hover{background:var(--teal2);transform:translateY(-2px);box-shadow:0 0 48px var(--teal-glow),0 8px 30px rgba(0,0,0,.4)}
+.btn-primary svg{width:18px;height:18px}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 24px;border-radius:var(--r-md);
+  border:1px solid var(--border);
+  color:var(--text2);font-size:15px;font-weight:500;
+  text-decoration:none;background:transparent;
+  transition:all .25s;
+}
+.btn-ghost:hover{border-color:var(--teal);color:var(--white);background:var(--teal-dim)}
+
+.hero-stats{
+  display:flex;align-items:center;gap:32px;
+  margin-top:64px;
+  padding-top:40px;
+  border-top:1px solid var(--border2);
+  opacity:0;animation:fadeUp .7s .55s forwards;
+}
+.stat-item{text-align:center}
+.stat-num{
+  font-family:'Syne',sans-serif;font-size:28px;font-weight:800;
+  color:var(--white);letter-spacing:-1px;display:block;
+}
+.stat-label{font-size:12px;color:var(--muted);font-weight:400}
+.stat-div{width:1px;height:36px;background:var(--border2)}
+
+/* ── BROWSER MOCKUP ── */
+.mockup-wrap{
+  margin-top:80px;width:100%;max-width:860px;
+  opacity:0;animation:fadeUp .8s .5s forwards;
+}
+.browser{
+  border-radius:var(--r-lg);
+  border:1px solid var(--border);
+  background:var(--card);
+  overflow:hidden;
+  box-shadow:0 0 0 1px var(--border2),0 40px 80px rgba(0,0,0,.6),0 0 60px var(--teal-dim);
+}
+.browser-bar{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;
+  background:var(--card2);
+  border-bottom:1px solid var(--border2);
+}
+.browser-dots{display:flex;gap:7px}
+.browser-dots span{width:11px;height:11px;border-radius:50%}
+.browser-dots span:nth-child(1){background:#FF5F57}
+.browser-dots span:nth-child(2){background:#FEBC2E}
+.browser-dots span:nth-child(3){background:#28C840}
+.browser-url{
+  flex:1;margin:0 12px;
+  padding:5px 12px;border-radius:6px;
+  background:rgba(255,255,255,.05);
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--muted);text-align:center;
+}
+.browser-body{padding:20px;display:flex;flex-direction:column;gap:12px}
+.scholar-row{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px;border-radius:var(--r-sm);
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--border2);
+  transition:border-color .3s;
+  animation:rowIn .5s both;
+}
+.scholar-row:nth-child(1){animation-delay:.7s}
+.scholar-row:nth-child(2){animation-delay:.85s}
+.scholar-row:nth-child(3){animation-delay:1s}
+@keyframes rowIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.scholar-row:hover{border-color:var(--border)}
+.sr-content{flex:1}
+.sr-title{font-size:13px;font-weight:500;color:#6BA3FF;margin-bottom:4px;line-height:1.4}
+.sr-meta{font-size:11px;color:var(--muted);line-height:1.5}
+.sr-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:99px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+  letter-spacing:.04em;
+  animation:badgePop .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+.badge-s1{background:rgba(0,212,160,.15);color:#00D4A0;border:1px solid rgba(0,212,160,.3)}
+.badge-s2{background:rgba(91,158,255,.12);color:#5B9EFF;border:1px solid rgba(91,158,255,.25)}
+.badge-s3{background:rgba(255,184,0,.1);color:#FFB800;border:1px solid rgba(255,184,0,.22)}
+.badge-s5{background:rgba(255,90,90,.1);color:#FF8080;border:1px solid rgba(255,90,90,.2)}
+.badge-q1{background:rgba(0,212,160,.2);color:#00D4A0;border:1px solid rgba(0,212,160,.4)}
+.badge-q2{background:rgba(91,158,255,.15);color:#5B9EFF;border:1px solid rgba(91,158,255,.3)}
+.badge-none{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid rgba(255,255,255,.08)}
+.badge-warn{background:rgba(255,184,0,.12);color:#FFB800;border:1px solid rgba(255,184,0,.25)}
+.badge svg{width:9px;height:9px}
+@keyframes badgePop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+
+/* ── SECTION HEADER ── */
+.section-tag{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  color:var(--teal);letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:16px;
+}
+.section-title{
+  font-family:'Syne',sans-serif;font-size:clamp(32px,4.5vw,52px);font-weight:800;
+  color:var(--white);line-height:1.1;letter-spacing:-1.5px;
+  margin-bottom:16px;
+}
+.section-sub{font-size:17px;font-weight:300;color:var(--text2);max-width:520px;line-height:1.7}
+
+/* ── FEATURES ── */
+.features{padding:120px 0}
+.features-header{margin-bottom:72px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--border2);border:1px solid var(--border2);border-radius:var(--r-xl);overflow:hidden}
+.feat-card{
+  padding:36px 32px;background:var(--card);
+  transition:background .3s;
+  position:relative;overflow:hidden;
+}
+.feat-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 0% 0%,var(--teal-dim),transparent 60%);
+  opacity:0;transition:opacity .4s;
+}
+.feat-card:hover{background:var(--card2)}
+.feat-card:hover::before{opacity:1}
+.feat-icon{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--teal-dim);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;font-size:20px;
+}
+.feat-name{
+  font-family:'Syne',sans-serif;font-size:18px;font-weight:700;
+  color:var(--white);margin-bottom:10px;letter-spacing:-.4px;
+}
+.feat-desc{font-size:14px;color:var(--text2);line-height:1.7}
+.feat-tag{
+  display:inline-block;margin-top:16px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--teal);letter-spacing:.06em;
+}
+
+/* ── HOW IT WORKS ── */
+.how{padding:120px 0;background:linear-gradient(180deg,transparent,rgba(0,212,160,.03) 50%,transparent)}
+.how-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.steps{display:flex;flex-direction:column;gap:0}
+.step{
+  display:flex;gap:20px;padding:24px 0;
+  border-bottom:1px solid var(--border2);
+  position:relative;
+}
+.step:last-child{border-bottom:none}
+.step-num{
+  flex-shrink:0;width:32px;height:32px;border-radius:8px;
+  background:var(--teal-dim);border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+  color:var(--teal);display:flex;align-items:center;justify-content:center;
+  margin-top:2px;
+}
+.step-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--white);margin-bottom:6px}
+.step-desc{font-size:14px;color:var(--text2);line-height:1.6}
+.how-visual{
+  border-radius:var(--r-xl);overflow:hidden;
+  border:1px solid var(--border);
+  background:var(--card);
+  padding:28px;
+  box-shadow:0 0 60px var(--teal-dim),0 20px 60px rgba(0,0,0,.4);
+}
+.engine-list{display:flex;flex-direction:column;gap:12px}
+.engine-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;border-radius:var(--r-sm);
+  background:var(--card2);border:1px solid var(--border2);
+  transition:all .25s;cursor:default;
+}
+.engine-item:hover{border-color:var(--border);background:rgba(0,212,160,.04)}
+.engine-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.engine-dot.teal{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+.engine-dot.blue{background:#5B9EFF;box-shadow:0 0 8px rgba(91,158,255,.6)}
+.engine-dot.amber{background:#FFB800;box-shadow:0 0 8px rgba(255,184,0,.5)}
+.engine-dot.red{background:#FF6B6B;box-shadow:0 0 8px rgba(255,107,107,.5)}
+.engine-dot.purple{background:#B47FFF;box-shadow:0 0 8px rgba(180,127,255,.5)}
+.engine-info{flex:1}
+.engine-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white)}
+.engine-desc{font-size:11px;color:var(--muted)}
+.engine-badge{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  padding:3px 8px;border-radius:4px;
+  background:var(--teal-dim);color:var(--teal);
+  border:1px solid var(--border);
+}
+
+/* ── PRICING ── */
+.pricing{padding:120px 0}
+.pricing-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;margin-top:64px;
+}
+.price-card{
+  border-radius:var(--r-xl);
+  border:1px solid var(--border2);
+  background:var(--card);
+  padding:32px 24px;
+  position:relative;overflow:hidden;
+  transition:all .3s;
+}
+.price-card:hover{border-color:var(--border);transform:translateY(-4px)}
+.price-card.featured{
+  border-color:var(--teal);
+  background:linear-gradient(135deg,var(--card2),rgba(0,212,160,.06));
+  box-shadow:0 0 40px var(--teal-dim),0 20px 60px rgba(0,0,0,.3);
+}
+.price-card.featured::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+}
+.price-pill{
+  display:inline-block;padding:4px 12px;border-radius:99px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+  letter-spacing:.06em;margin-bottom:20px;
+}
+.pill-free{background:var(--teal-dim);color:var(--teal);border:1px solid var(--border)}
+.pill-pop{background:var(--teal-dim);color:var(--teal);border:1px solid var(--border)}
+.pill-hot{background:rgba(255,90,90,.12);color:#FF8080;border:1px solid rgba(255,90,90,.2)}
+.pill-pro{background:linear-gradient(90deg,var(--teal),#00FFCC);color:var(--ink)}
+.pill-dosen{background:rgba(91,158,255,.15);color:#5B9EFF;border:1px solid rgba(91,158,255,.25)}
+.price-plan{
+  font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+  color:var(--white);margin-bottom:4px;
+}
+.price-target{font-size:12px;color:var(--muted);margin-bottom:16px}
+.price-amount{
+  font-family:'Syne',sans-serif;font-size:34px;font-weight:800;
+  color:var(--white);letter-spacing:-1.5px;line-height:1.1;
+  margin-bottom:4px;
+}
+.price-amount span{font-size:14px;font-weight:400;color:var(--text2);letter-spacing:0}
+.price-semester{font-size:13px;color:var(--text2);margin-bottom:2px}
+.price-year{font-size:12px;color:var(--teal);margin-bottom:20px}
+.price-divider{height:1px;background:var(--border2);margin-bottom:20px}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.price-features li{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:13px;color:var(--text2);line-height:1.5;
+}
+.price-features li::before{
+  content:'✓';flex-shrink:0;
+  font-size:11px;font-weight:700;color:var(--teal);
+  width:16px;height:16px;border-radius:50%;
+  background:var(--teal-dim);
+  display:flex;align-items:center;justify-content:center;
+  margin-top:2px;
+}
+.price-features li.dim{color:var(--muted)}
+.price-features li.dim::before{color:var(--muted2);background:rgba(255,255,255,.03)}
+.price-btn{
+  display:block;text-align:center;
+  padding:13px 20px;border-radius:var(--r-md);
+  font-size:13px;font-weight:600;
+  text-decoration:none;transition:all .25s;
+}
+.price-btn.outline{
+  border:1px solid var(--border);color:var(--text2);
+}
+.price-btn.outline:hover{border-color:var(--teal);color:var(--white)}
+.price-btn.solid{
+  background:var(--teal);color:var(--ink);
+  box-shadow:0 0 24px var(--teal-glow);
+}
+.price-btn.solid:hover{background:var(--teal2);box-shadow:0 0 40px var(--teal-glow)}
+.price-btn.ghost{
+  border:1px solid rgba(91,158,255,.3);color:#5B9EFF;
+}
+.price-btn.ghost:hover{background:rgba(91,158,255,.08);border-color:#5B9EFF}
+.institusi-row{
+  margin-top:20px;padding:20px;border-radius:var(--r-lg);
+  border:1px solid var(--border2);background:var(--card);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
+}
+.institusi-info h4{font-family:'Syne',sans-serif;font-size:18px;color:var(--white);margin-bottom:4px}
+.institusi-info p{font-size:13px;color:var(--text2)}
+.institusi-price{text-align:right}
+.institusi-price .big{font-size:24px;font-weight:700;color:var(--white)}
+.institusi-price .small{font-size:12px;color:var(--teal)}
+.pricing-note{
+  text-align:center;margin-top:32px;
+  font-size:13px;color:var(--muted);
+}
+.pricing-note a{color:var(--teal);text-decoration:none}
+
+/* ── TESTIMONIAL / TRUST ── */
+.trust{padding:80px 0}
+.trust-inner{
+  border-radius:var(--r-xl);
+  border:1px solid var(--border2);
+  background:linear-gradient(135deg,var(--card),rgba(0,212,160,.04));
+  padding:60px;display:flex;align-items:center;gap:60px;
+  flex-wrap:wrap;
+}
+.trust-stat{flex:1;min-width:160px;text-align:center}
+.trust-stat-num{
+  font-family:'Syne',sans-serif;font-size:44px;font-weight:800;
+  color:var(--white);letter-spacing:-2px;display:block;
+}
+.trust-stat-label{font-size:13px;color:var(--muted)}
+.trust-div{width:1px;height:60px;background:var(--border2);flex-shrink:0}
+
+/* ── FAQ ── */
+.faq{padding:120px 0}
+.faq-list{margin-top:56px;display:flex;flex-direction:column;gap:0;border:1px solid var(--border2);border-radius:var(--r-xl);overflow:hidden}
+.faq-item{border-bottom:1px solid var(--border2)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{
+  width:100%;text-align:left;
+  padding:24px 28px;background:none;border:none;cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;gap:20px;
+  font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
+  color:var(--white);transition:color .2s;
+}
+.faq-q:hover{color:var(--teal)}
+.faq-icon{flex-shrink:0;width:20px;height:20px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .3s;color:var(--muted)}
+.faq-item.open .faq-icon{border-color:var(--teal);color:var(--teal);transform:rotate(45deg)}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .35s ease, padding .35s;
+  font-size:14px;color:var(--text2);line-height:1.8;
+  padding:0 28px;
+}
+.faq-item.open .faq-a{max-height:300px;padding:0 28px 24px}
+
+/* ── LEGAL SECTIONS ── */
+.legal{padding:80px 0}
+.legal-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
+.legal-card{
+  border-radius:var(--r-xl);border:1px solid var(--border2);
+  background:var(--card);padding:40px;
+}
+.legal-card h3{
+  font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+  color:var(--white);margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+}
+.legal-card h4{
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  color:var(--teal);margin:20px 0 8px;text-transform:uppercase;letter-spacing:.06em;
+}
+.legal-card p,.legal-card li{font-size:13px;color:var(--text2);line-height:1.8}
+.legal-card ul{padding-left:16px;display:flex;flex-direction:column;gap:4px}
+.legal-updated{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--muted);margin-bottom:20px;
+}
+
+/* ── FOOTER ── */
+footer{
+  padding:60px 0 40px;
+  border-top:1px solid var(--border2);
+}
+.footer-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap}
+.footer-brand{max-width:280px}
+.footer-logo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.footer-desc{font-size:13px;color:var(--muted);line-height:1.7}
+.footer-links-group h5{
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  color:var(--white);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;
+}
+.footer-links-group a{
+  display:block;font-size:13px;color:var(--muted);
+  text-decoration:none;margin-bottom:10px;transition:color .2s;
+}
+.footer-links-group a:hover{color:var(--teal)}
+.footer-bottom{
+  margin-top:48px;padding-top:24px;
+  border-top:1px solid var(--border2);
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-copy{font-size:12px;color:var(--muted)}
+.footer-copy a{color:var(--teal);text-decoration:none}
+
+/* ── CTA SECTION ── */
+.cta-section{
+  padding:100px 0;
+  text-align:center;
+}
+.cta-inner{
+  border-radius:var(--r-xl);
+  border:1px solid var(--border);
+  background:linear-gradient(135deg,rgba(0,212,160,.08),rgba(0,212,160,.02));
+  padding:80px 60px;
+  position:relative;overflow:hidden;
+}
+.cta-inner::before{
+  content:'';position:absolute;
+  top:-100px;left:50%;transform:translateX(-50%);
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,160,.15),transparent 70%);
+  pointer-events:none;
+}
+.cta-inner h2{
+  font-family:'Syne',sans-serif;font-size:clamp(32px,5vw,56px);font-weight:800;
+  color:var(--white);letter-spacing:-1.5px;margin-bottom:16px;
+}
+.cta-inner p{font-size:17px;color:var(--text2);margin-bottom:40px}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+
+/* ── SCROLL INDICATOR ── */
+.scroll-indicator{
+  margin-top:48px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  opacity:0;animation:fadeUp .7s .8s forwards;
+}
+.scroll-mouse{
+  width:22px;height:34px;border:1.5px solid var(--border);border-radius:99px;
+  display:flex;justify-content:center;padding-top:6px;
+}
+.scroll-wheel{width:3px;height:6px;border-radius:99px;background:var(--teal);animation:scrollW 1.8s ease-in-out infinite}
+@keyframes scrollW{0%,100%{opacity:1;transform:translateY(0)}80%{opacity:0;transform:translateY(10px)}}
+.scroll-text{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .how-inner{grid-template-columns:1fr}
+  .legal-grid{grid-template-columns:1fr}
+  .trust-inner{flex-direction:column;gap:32px;text-align:center;padding:40px 28px}
+  .trust-div{width:60px;height:1px}
+  .cta-inner{padding:48px 28px}
+  .footer-inner{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- ANIMATED BACKGROUND CANVAS -->
+<canvas id="bg-canvas"></canvas>
+<div class="cursor-glow" id="cursor-glow"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <div class="logo-sq">Ck</div>
+    <span class="nav-logo-text">CekSINTA</span>
+  </a>
+  <div class="nav-links">
+    <a href="#fitur">Fitur</a>
+    <a href="#cara-kerja">Cara Kerja</a>
+    <a href="#harga">Harga</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <a href="https://chromewebstore.google.com/detail/ceksinta-%E2%80%94-validator-jurn/ddajkgepfoghcdnpnpecnkjgdmifoapo" target="_blank" class="nav-cta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l2 2 4-4"/></svg>
+    Pasang Gratis
+  </a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="hero-eyebrow-dot"></span>
+    Ekstensi Chrome · Gratis · Indonesia
+  </div>
+  <h1>Cek Akreditasi Jurnal<br/><em>Seketika.</em></h1>
+  <p class="hero-sub">Badge SINTA S1–S6 dan Scopus Q1–Q4 langsung muncul di Google Scholar dan Garuda. Tanpa copy-paste, tanpa buka tab baru.</p>
+  <div class="hero-actions">
+    <a href="https://chromewebstore.google.com/detail/ceksinta-%E2%80%94-validator-jurn/ddajkgepfoghcdnpnpecnkjgdmifoapo" target="_blank" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+      Tambahkan ke Chrome — Gratis
+    </a>
+    <a href="#cara-kerja" class="btn-ghost">
+      Lihat cara kerjanya →
+    </a>
+  </div>
+
+  <!-- BROWSER MOCKUP -->
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">scholar.google.com/scholar?q=pendidikan+Indonesia</div>
+      </div>
+      <div class="browser-body">
+        <div class="scholar-row">
+          <div class="sr-content">
+            <div class="sr-title">Pengaruh Literasi Digital terhadap Hasil Belajar Mahasiswa Indonesia</div>
+            <div class="sr-meta">A. Pratama, B. Sari · 2024 · Jurnal Pendidikan dan Kebudayaan</div>
+            <div class="sr-badges">
+              <span class="badge badge-s1">● S1</span>
+              <span class="badge badge-q2">◆ Q2</span>
+            </div>
+          </div>
+        </div>
+        <div class="scholar-row">
+          <div class="sr-content">
+            <div class="sr-title">Implementasi Kurikulum Merdeka: Studi Kasus di Sekolah Dasar</div>
+            <div class="sr-meta">C. Wahyu, D. Rahayu · 2023 · MATAAZIR: Jurnal Administrasi</div>
+            <div class="sr-badges">
+              <span class="badge badge-s3">● S3</span>
+              <span class="badge badge-warn">⚠ Perlu Cek</span>
+            </div>
+          </div>
+        </div>
+        <div class="scholar-row">
+          <div class="sr-content">
+            <div class="sr-title">Deep Learning untuk Klasifikasi Citra Batik Nusantara</div>
+            <div class="sr-meta">E. Nugroho · 2024 · Jurnal Teknologi Informasi dan Ilmu Komputer</div>
+            <div class="sr-badges">
+              <span class="badge badge-s2">● S2</span>
+              <span class="badge badge-q1">◆ Q1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item"><span class="stat-num">14.278+</span><span class="stat-label">Jurnal SINTA</span></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-num">32.193+</span><span class="stat-label">Jurnal Scopus</span></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-num">&lt; 1 detik</span><span class="stat-label">Waktu deteksi</span></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-num">Gratis</span><span class="stat-label">Selamanya</span></div>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
+    <span class="scroll-text">scroll</span>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="fitur">
+  <div class="container">
+    <div class="features-header reveal">
+      <div class="section-tag">Fitur Unggulan</div>
+      <h2 class="section-title">Lima mesin.<br/>Satu ekstensi.</h2>
+      <p class="section-sub">CekSINTA dibangun dengan lima engine khusus yang bekerja bersamaan untuk memberikan informasi jurnal paling lengkap.</p>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feat-card">
+        <div class="feat-icon">🔬</div>
+        <div class="feat-name">FORGE Engine</div>
+        <div class="feat-desc">Deteksi otomatis nama jurnal di Google Scholar dan Garuda, lalu tampilkan badge SINTA S1–S6 dalam waktu kurang dari satu detik.</div>
+        <div class="feat-tag">// core detection</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌐</div>
+        <div class="feat-name">ATLAS Engine</div>
+        <div class="feat-desc">Menampilkan peringkat Scopus Q1–Q4 beserta SJR Score dan H-index dari database 32.000+ jurnal internasional.</div>
+        <div class="feat-tag">// scopus data</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔖</div>
+        <div class="feat-name">VAULT — Simpan Jurnal</div>
+        <div class="feat-desc">Simpan jurnal yang sudah dicek ke dalam koleksi pribadi. Export ke CSV kapan saja untuk keperluan daftar pustaka.</div>
+        <div class="feat-tag">// bookmark & export</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🦅</div>
+        <div class="feat-name">RAPTOR Engine</div>
+        <div class="feat-desc">Deteksi jurnal predator secara otomatis menggunakan Beall's List dan database publisher predator lokal Indonesia.</div>
+        <div class="feat-tag">// predatory detection</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔍</div>
+        <div class="feat-name">Cari Jurnal</div>
+        <div class="feat-desc">Cari jurnal langsung dari popup ekstensi dengan filter peringkat SINTA, Scopus, dan status aktif/tidak aktif.</div>
+        <div class="feat-tag">// search & filter</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌙</div>
+        <div class="feat-name">Dark Mode + Multi-Platform</div>
+        <div class="feat-desc">Tampilan gelap yang nyaman untuk mata. Bekerja di Google Scholar, Garuda, ResearchGate, dan Semantic Scholar.</div>
+        <div class="feat-tag">// ui & platforms</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="cara-kerja">
+  <div class="container">
+    <div class="how-inner">
+      <div>
+        <div class="section-tag reveal">Cara Kerja</div>
+        <h2 class="section-title reveal reveal-delay-1">Pasang sekali.<br/>Kerja otomatis.</h2>
+        <div class="steps">
+          <div class="step reveal reveal-delay-1">
+            <div class="step-num">01</div>
+            <div>
+              <div class="step-title">Pasang ekstensi</div>
+              <div class="step-desc">Klik "Tambahkan ke Chrome" dari Chrome Web Store. Tidak perlu akun, tidak perlu konfigurasi.</div>
+            </div>
+          </div>
+          <div class="step reveal reveal-delay-2">
+            <div class="step-num">02</div>
+            <div>
+              <div class="step-title">Buka Google Scholar atau Garuda</div>
+              <div class="step-desc">Cari topik penelitian seperti biasa. CekSINTA otomatis aktif di latar belakang.</div>
+            </div>
+          </div>
+          <div class="step reveal reveal-delay-3">
+            <div class="step-num">03</div>
+            <div>
+              <div class="step-title">Badge muncul otomatis</div>
+              <div class="step-desc">Di samping setiap nama jurnal, badge S1–S6 dan Q1–Q4 langsung muncul. Klik badge untuk detail lengkap.</div>
+            </div>
+          </div>
+          <div class="step reveal reveal-delay-3">
+            <div class="step-num">04</div>
+            <div>
+              <div class="step-title">Simpan dan export</div>
+              <div class="step-desc">Klik simpan di panel detail. Semua jurnal tersimpan bisa diexport ke CSV untuk daftar pustaka.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="how-visual reveal reveal-delay-2">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:20px;letter-spacing:.06em">// ENGINE STATUS</div>
+        <div class="engine-list">
+          <div class="engine-item">
+            <div class="engine-dot teal"></div>
+            <div class="engine-info">
+              <div class="engine-name">FORGE</div>
+              <div class="engine-desc">SINTA badge detector</div>
+            </div>
+            <div class="engine-badge">ACTIVE</div>
+          </div>
+          <div class="engine-item">
+            <div class="engine-dot blue"></div>
+            <div class="engine-info">
+              <div class="engine-name">ATLAS</div>
+              <div class="engine-desc">Scopus Q1–Q4 matcher</div>
+            </div>
+            <div class="engine-badge">ACTIVE</div>
+          </div>
+          <div class="engine-item">
+            <div class="engine-dot amber"></div>
+            <div class="engine-info">
+              <div class="engine-name">RAPTOR</div>
+              <div class="engine-desc">Predatory journal scanner</div>
+            </div>
+            <div class="engine-badge">ACTIVE</div>
+          </div>
+          <div class="engine-item">
+            <div class="engine-dot teal"></div>
+            <div class="engine-info">
+              <div class="engine-name">VAULT</div>
+              <div class="engine-desc">Bookmark & CSV export</div>
+            </div>
+            <div class="engine-badge">ACTIVE</div>
+          </div>
+          <div class="engine-item">
+            <div class="engine-dot purple"></div>
+            <div class="engine-info">
+              <div class="engine-name">PRISM</div>
+              <div class="engine-desc">AI journal search</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(180,127,255,.12);color:#B47FFF;border:1px solid rgba(180,127,255,.25)">SOON</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="trust">
+  <div class="container">
+    <div class="trust-inner reveal">
+      <div class="trust-stat">
+        <span class="trust-stat-num">14K+</span>
+        <span class="trust-stat-label">Jurnal SINTA terindeks</span>
+      </div>
+      <div class="trust-div"></div>
+      <div class="trust-stat">
+        <span class="trust-stat-num">32K+</span>
+        <span class="trust-stat-label">Jurnal Scopus terindeks</span>
+      </div>
+      <div class="trust-div"></div>
+      <div class="trust-stat">
+        <span class="trust-stat-num">100%</span>
+        <span class="trust-stat-label">Gratis untuk pengguna umum</span>
+      </div>
+      <div class="trust-div"></div>
+      <div class="trust-stat">
+        <span class="trust-stat-num">0</span>
+        <span class="trust-stat-label">Data pribadi dikumpulkan</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="harga">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-tag">Harga</div>
+      <h2 class="section-title">Mulai gratis.<br/>Upgrade saat butuh lebih.</h2>
+      <p class="section-sub">Pilih paket yang sesuai dengan kebutuhan riset kamu. Semua paket berbayar mendukung pembayaran QRIS dan transfer bank lokal.</p>
+    </div>
+    <div class="pricing-grid">
+      <!-- FREE -->
+      <div class="price-card reveal reveal-delay-1">
+        <div class="price-pill pill-free">Gratis Selamanya</div>
+        <div class="price-plan">Free</div>
+        <div class="price-target">Mahasiswa S1 casual</div>
+        <div class="price-amount">Rp 0<span></span></div>
+        <div class="price-semester">—</div>
+        <div class="price-year">selamanya</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Badge S1–S6 (FORGE)</li>
+          <li>Badge Q1–Q4 (ATLAS)</li>
+          <li>Verdict predatory saja</li>
+          <li class="dim">Detail sinyal RAPTOR</li>
+          <li>Bookmark maks. 5 jurnal</li>
+          <li class="dim">Export CSV</li>
+          <li class="dim">PRISM AI search</li>
+          <li class="dim">Riwayat pencarian</li>
+        </ul>
+        <a href="https://chromewebstore.google.com/detail/ceksinta-%E2%80%94-validator-jurn/ddajkgepfoghcdnpnpecnkjgdmifoapo" target="_blank" class="price-btn outline">Pasang Gratis →</a>
+      </div>
+
+      <!-- SCHOLAR -->
+      <div class="price-card reveal reveal-delay-2">
+        <div class="price-pill">Mahasiswa Skripsi</div>
+        <div class="price-plan">Scholar</div>
+        <div class="price-target">Skripsi & tugas akhir</div>
+        <div class="price-amount">Rp 15.000<span>/bln</span></div>
+        <div class="price-semester">Rp 49.000 / semester</div>
+        <div class="price-year">Rp 119.000 / tahun · hemat 3 bln</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Semua fitur Free</li>
+          <li>RAPTOR 3/7 sinyal terlihat</li>
+          <li>Bookmark 50 jurnal (VAULT)</li>
+          <li>Riwayat 30 hari</li>
+          <li>Export 1×/bln (maks 25 baris)</li>
+          <li class="dim">PRISM AI search</li>
+          <li class="dim">Transparency report penuh</li>
+          <li class="dim">Export unlimited</li>
+        </ul>
+        <a href="#" class="price-btn outline">Pilih Scholar →</a>
+      </div>
+
+      <!-- RESEARCHER (featured) -->
+      <div class="price-card featured reveal reveal-delay-2">
+        <div class="price-pill pill-pop">⭐ Paling Populer</div>
+        <div class="price-plan">Researcher</div>
+        <div class="price-target">Mahasiswa S2/S3 & dosen riset</div>
+        <div class="price-amount">Rp 29.000<span>/bln</span></div>
+        <div class="price-semester">Rp 89.000 / semester</div>
+        <div class="price-year">Rp 229.000 / tahun · hemat 2,5 bln</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Semua Scholar</li>
+          <li>RAPTOR full 7 sinyal + transparency report</li>
+          <li>VAULT unlimited bookmark</li>
+          <li>Riwayat 365 hari</li>
+          <li>Export CSV unlimited</li>
+          <li>PRISM 30 query/bln</li>
+          <li>Laporkan jurnal predator</li>
+        </ul>
+        <a href="#" class="price-btn solid">Pilih Researcher →</a>
+      </div>
+
+      <!-- DOSEN PRO -->
+      <div class="price-card reveal reveal-delay-3">
+        <div class="price-pill pill-hot">🔥 Untuk Dosen</div>
+        <div class="price-plan">Dosen Pro</div>
+        <div class="price-target">Dosen aktif publikasi & hibah</div>
+        <div class="price-amount">Rp 49.000<span>/bln</span></div>
+        <div class="price-semester">Rp 149.000 / semester</div>
+        <div class="price-year">Rp 399.000 / tahun · hemat 2 bln</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Semua Researcher</li>
+          <li>PRISM unlimited query</li>
+          <li>Laporan vote dosen (bobot 3×)</li>
+          <li>Badge "Dosen Terverifikasi"</li>
+          <li>Export PDF laporan jurnal</li>
+          <li>Priority database update</li>
+          <li>Verifikasi via email .ac.id</li>
+          <li>Bisa diklaim biaya hibah</li>
+        </ul>
+        <a href="#" class="price-btn ghost">Verifikasi Dosen →</a>
+      </div>
+    </div>
+
+    <!-- INSTITUSI ROW -->
+    <div class="institusi-row reveal">
+      <div class="institusi-info">
+        <h4>Paket Institusi</h4>
+        <p>Perpustakaan / Prodi / Fakultas / Kampus — unlimited user</p>
+      </div>
+      <div class="institusi-price">
+        <div class="big">Rp 749.000 / bln</div>
+        <div class="small">Rp 5.999.000 / tahun · hemat 3 bulan</div>
+      </div>
+      <a href="mailto:automeda.app@gmail.com" class="price-btn outline" style="padding:12px 24px">Hubungi Kami →</a>
+    </div>
+
+    <p class="pricing-note reveal">Semua harga dalam Rupiah. Pembayaran via QRIS, GoPay, OVO, Dana, Virtual Account BCA/BNI/Mandiri. <a href="mailto:automeda.app@gmail.com">Ada pertanyaan?</a> atau <a href="mailto:igimatsu@gmail.com">igimatsu@gmail.com</a></p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-tag">FAQ</div>
+      <h2 class="section-title">Pertanyaan umum</h2>
+    </div>
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <button class="faq-q">Apakah CekSINTA benar-benar gratis?<div class="faq-icon">+</div></button>
+        <div class="faq-a">Ya. Paket Free memberikan akses badge SINTA, Scopus, dan deteksi predator dasar selamanya. Upgrade ke paket berbayar jika kamu butuh fitur lebih seperti export CSV, detail RAPTOR, dan PRISM AI search.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Data apa yang dikumpulkan ekstensi ini?<div class="faq-icon">+</div></button>
+        <div class="faq-a">CekSINTA tidak mengumpulkan data pribadi. Ekstensi hanya membaca nama jurnal dari halaman yang kamu buka untuk dicek ke database kami. Tidak ada riwayat pencarian, nama, atau email yang disimpan tanpa izin eksplisit dari kamu.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Di mana saja ekstensi ini bekerja?<div class="faq-icon">+</div></button>
+        <div class="faq-a">CekSINTA saat ini bekerja di Google Scholar (scholar.google.com dan scholar.google.co.id), Garuda (garuda.kemdiktisaintek.go.id), ResearchGate, dan Semantic Scholar. Dukungan untuk platform lain akan terus ditambahkan.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Seberapa akurat data SINTA-nya?<div class="faq-icon">+</div></button>
+        <div class="faq-a">Data diambil langsung dari website resmi SINTA (sinta.kemdiktisaintek.go.id) dan diperbarui secara berkala. Database kami mencakup 14.278+ jurnal. Namun karena SINTA sendiri terus diperbarui oleh Kemdiktisaintek, ada kemungkinan kecil ada selisih waktu antara pembaruan resmi dan database kami.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Bagaimana cara membayar paket berbayar?<div class="faq-icon">+</div></button>
+        <div class="faq-a">Pembayaran dilakukan melalui QRIS (GoPay, OVO, Dana, ShopeePay), Virtual Account BCA/BNI/Mandiri/BRI, dan Indomaret/Alfamart. Tidak perlu kartu kredit. Semua harga dalam Rupiah.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Apakah ada refund jika saya tidak puas?<div class="faq-icon">+</div></button>
+        <div class="faq-a">Ya. Kami menyediakan garansi uang kembali 7 hari untuk pembelian pertama. Hubungi kami di automeda.app@gmail.com dengan subject "REFUND" dan kami akan proses dalam 1x24 jam kerja.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEGAL -->
+<section class="legal" id="legal">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-tag">Legal</div>
+      <h2 class="section-title">Kebijakan & Ketentuan</h2>
+    </div>
+    <div class="legal-grid">
+      <!-- PRIVACY POLICY -->
+      <div class="legal-card reveal">
+        <h3>🔒 Kebijakan Privasi</h3>
+        <div class="legal-updated">Terakhir diperbarui: 21 April 2026</div>
+
+        <h4>1. Data yang Dikumpulkan</h4>
+        <p>CekSINTA mengumpulkan data minimal yang diperlukan untuk beroperasi. Secara default, ekstensi hanya membaca nama jurnal dari halaman yang aktif dibuka di browser kamu untuk dikirimkan ke API kami. Tidak ada data identitas pribadi yang dikumpulkan tanpa persetujuan eksplisit.</p>
+
+        <h4>2. Data Opsional (Login Google)</h4>
+        <p>Jika kamu memilih login dengan Google, kami menyimpan alamat email kamu untuk menghubungkan status berlangganan ke akun. Email tidak dibagikan kepada pihak ketiga manapun dan tidak digunakan untuk tujuan pemasaran tanpa izin.</p>
+
+        <h4>3. Data Pembayaran</h4>
+        <p>Transaksi pembayaran diproses oleh Midtrans (PT Midtrans). Kami tidak menyimpan informasi kartu atau detail rekening bank kamu. Silakan baca kebijakan privasi Midtrans untuk informasi lebih lanjut.</p>
+
+        <h4>4. Penyimpanan Lokal</h4>
+        <p>Bookmark jurnal dan preferensi ekstensi disimpan secara lokal di browser kamu menggunakan chrome.storage.local dan tidak dikirimkan ke server kami.</p>
+
+        <h4>5. Penggunaan Data API</h4>
+        <p>Query nama jurnal yang dikirim ke API kami tidak dikaitkan dengan identitas pengguna dan digunakan semata-mata untuk mengembalikan data akreditasi. Log query dihapus otomatis setelah 30 hari.</p>
+
+        <h4>6. Hak Pengguna</h4>
+        <ul>
+          <li>Hak untuk mengakses data yang kami simpan tentang kamu</li>
+          <li>Hak untuk meminta penghapusan data</li>
+          <li>Hak untuk menarik persetujuan kapan saja</li>
+        </ul>
+        <p style="margin-top:12px">Untuk pertanyaan privasi: <a href="mailto:automeda.app@gmail.com" style="color:var(--teal)">automeda.app@gmail.com</a></p>
+      </div>
+
+      <!-- TERMS & CONDITIONS -->
+      <div class="legal-card reveal reveal-delay-2">
+        <h3>📋 Syarat & Ketentuan</h3>
+        <div class="legal-updated">Terakhir diperbarui: 21 April 2026</div>
+
+        <h4>1. Penerimaan Ketentuan</h4>
+        <p>Dengan memasang dan menggunakan ekstensi CekSINTA, kamu menyetujui syarat dan ketentuan ini. Jika kamu tidak setuju, harap uninstall ekstensi dan hentikan penggunaan layanan.</p>
+
+        <h4>2. Layanan yang Disediakan</h4>
+        <p>CekSINTA menyediakan informasi akreditasi jurnal ilmiah berdasarkan data dari SINTA (Kemdiktisaintek) dan Scimago/Scopus. Informasi ini disediakan "sebagaimana adanya" dan kami tidak menjamin keakuratan 100% mengingat data sumber dapat berubah sewaktu-waktu.</p>
+
+        <h4>3. Penggunaan yang Diizinkan</h4>
+        <ul>
+          <li>Penggunaan pribadi untuk riset akademik</li>
+          <li>Penggunaan institusional dengan lisensi yang sesuai</li>
+          <li>Integrasi ke alur kerja penelitian pribadi</li>
+        </ul>
+
+        <h4>4. Penggunaan yang Dilarang</h4>
+        <ul>
+          <li>Scraping massal data melalui ekstensi</li>
+          <li>Reverse engineering atau mendistribusikan ulang</li>
+          <li>Penggunaan komersial tanpa lisensi institusi</li>
+          <li>Melewati batas penggunaan dengan cara apapun</li>
+        </ul>
+
+        <h4>5. Kebijakan Refund</h4>
+        <p>Garansi uang kembali 7 hari berlaku untuk pembelian pertama paket berbayar. Refund tidak berlaku untuk pembaruan langganan. Hubungi automeda.app@gmail.com untuk proses refund.</p>
+
+        <h4>6. Perubahan Layanan</h4>
+        <p>Kami berhak mengubah, menangguhkan, atau menghentikan layanan dengan pemberitahuan 30 hari melalui email terdaftar. Perubahan harga akan diberitahukan minimal 14 hari sebelum berlaku.</p>
+
+        <h4>7. Hukum yang Berlaku</h4>
+        <p>Syarat dan ketentuan ini tunduk pada hukum Republik Indonesia. Segala sengketa diselesaikan melalui musyawarah, dan jika tidak tercapai kesepakatan, melalui Pengadilan Negeri Surakarta.</p>
+
+        <p style="margin-top:12px">Pertanyaan: <a href="mailto:automeda.app@gmail.com" style="color:var(--teal)">automeda.app@gmail.com</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-inner reveal">
+      <h2>Mulai lebih cerdas.<br/>Mulai sekarang.</h2>
+      <p>Ribuan mahasiswa dan dosen Indonesia sudah pakai CekSINTA.<br/>Pasang gratis, tidak perlu akun.</p>
+      <a href="https://chromewebstore.google.com/detail/ceksinta-%E2%80%94-validator-jurn/ddajkgepfoghcdnpnpecnkjgdmifoapo" target="_blank" class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><circle cx="12" cy="12" r="3"/><path d="M12 9V2M12 22v-7M2 12h7M22 12h-7"/></svg>
+        Tambahkan ke Chrome — Gratis
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="logo-sq">Ck</div>
+          <span class="nav-logo-text">CekSINTA</span>
+        </div>
+        <p class="footer-desc">Validator jurnal terakreditasi SINTA dan Scopus untuk peneliti Indonesia. Dibangun dengan ❤️ di Solo.</p>
+      </div>
+      <div class="footer-links-group">
+        <h5>Produk</h5>
+        <a href="#fitur">Fitur</a>
+        <a href="#cara-kerja">Cara Kerja</a>
+        <a href="#harga">Harga</a>
+        <a href="https://chromewebstore.google.com/detail/ceksinta-%E2%80%94-validator-jurn/ddajkgepfoghcdnpnpecnkjgdmifoapo" target="_blank">Chrome Web Store</a>
+      </div>
+      <div class="footer-links-group">
+        <h5>Dukungan</h5>
+        <a href="#faq">FAQ</a>
+        <a href="mailto:automeda.app@gmail.com">Email Kami</a>
+        <a href="#legal">Kebijakan Privasi</a>
+        <a href="#legal">Syarat & Ketentuan</a>
+      </div>
+      <div class="footer-links-group">
+        <h5>Kontak</h5>
+        <a href="mailto:automeda.app@gmail.com">automeda.app@gmail.com</a>
+        <a href="mailto:igimatsu@gmail.com">igimatsu@gmail.com</a>
+        <a href="https://wa.me/6282250584724" target="_blank">+62 822-5058-4724</a>
+        <a href="https://wa.me/62895330117666" target="_blank">+62 895-3301-17666</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 CekSINTA. Hak cipta dilindungi. Produk <a href="#">Automeda</a>.</div>
+      <div class="footer-copy">Dibuat untuk peneliti Indonesia 🇮🇩</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── ANIMATED PARTICLE CANVAS ──
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [], lines = [];
+
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor(){this.reset()}
+  reset(){
+    this.x = Math.random()*W;
+    this.y = Math.random()*H;
+    this.vx = (Math.random()-.5)*.3;
+    this.vy = (Math.random()-.5)*.3;
+    this.r = Math.random()*1.5+.5;
+    this.alpha = Math.random()*.5+.1;
+    this.color = Math.random()>.7 ? '#00D4A0' : '#2E4D3E';
+  }
+  update(){
+    this.x+=this.vx; this.y+=this.vy;
+    if(this.x<0||this.x>W||this.y<0||this.y>H) this.reset();
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = this.alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+for(let i=0;i<80;i++) particles.push(new Particle());
+
+function drawConnections(){
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<120){
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle='#00D4A0';
+        ctx.globalAlpha=(1-dist/120)*.08;
+        ctx.lineWidth=.5;
+        ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+    }
+  }
+}
+
+function animate(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{p.update();p.draw()});
+  drawConnections();
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ── CURSOR GLOW ──
+const glow = document.getElementById('cursor-glow');
+document.addEventListener('mousemove',e=>{
+  glow.style.left = e.clientX+'px';
+  glow.style.top = e.clientY+'px';
+});
+
+// ── NAV SCROLL ──
+const nav = document.getElementById('nav');
+window.addEventListener('scroll',()=>{
+  nav.classList.toggle('scrolled', window.scrollY>40);
+});
+
+// ── SCROLL REVEAL ──
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
+  });
+},{threshold:.12});
+revealEls.forEach(el=>io.observe(el));
+
+// ── FAQ ACCORDION ──
+document.querySelectorAll('.faq-q').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const item = btn.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+    if(!isOpen) item.classList.add('open');
+  });
+});
+
+// ── COUNTER ANIMATION ──
+function animateCounter(el, target, suffix=''){
+  let start = 0;
+  const step = target/60;
+  const timer = setInterval(()=>{
+    start = Math.min(start+step, target);
+    el.textContent = Math.floor(start).toLocaleString('id-ID') + suffix;
+    if(start>=target) clearInterval(timer);
+  },16);
+}
+const statsIo = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      animateCounter(document.querySelectorAll('.stat-num')[0], 14278, '+');
+      animateCounter(document.querySelectorAll('.stat-num')[1], 32193, '+');
+      statsIo.disconnect();
+    }
+  });
+},{threshold:.5});
+const heroStats = document.querySelector('.hero-stats');
+if(heroStats) statsIo.observe(heroStats);
+</script>
+</body>
+</html>
