@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/checkout", "destination": "/checkout.html" },
+    { "source": "/qr", "destination": "/qr.html" },
+    { "source": "/success", "destination": "/success.html" }
+  ]
+}
