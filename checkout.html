@@ -315,7 +315,12 @@ function getSelectedPrice() {
 
 function pay(method) {
   const pr      = getSelectedPrice();
-  const orderId = `ceksinta_${currentPlan}_${currentPriceId}_${uid}_${Date.now()}`;
+  // Max 50 karakter untuk Midtrans
+// Format: cs_PLAN_PRICE_SHORTUID_TS
+const shortUid = uid.slice(-8); // ambil 8 karakter terakhir uid
+const ts = Date.now().toString().slice(-8); // 8 digit terakhir timestamp
+const orderId = `cs_${currentPlan.slice(0,3)}_${currentPriceId.slice(0,3)}_${shortUid}_${ts}`;
+// Contoh: cs_res_mon_kcxudr12_44587123 = 29 karakter ✓
   const url     = `qr.html?uid=${encodeURIComponent(uid)}&plan=${currentPlan}&price_id=${currentPriceId}&order_id=${encodeURIComponent(orderId)}&amount=${pr.amount}&method=${method}`;
   window.location.href = url;
 }
