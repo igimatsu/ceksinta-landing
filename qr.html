@@ -97,7 +97,7 @@
 <p class="note">Pembayaran diproses aman oleh Midtrans (lisensi Bank Indonesia).<br>Pro aktif otomatis setelah dikonfirmasi.</p>
 
 <script>
-const API_BASE = "https://ceksinta-api.igimatsu.workers.dev";
+const API_BASE = "";
 
 // Label paket
 const PLAN_LABELS = {
@@ -152,7 +152,7 @@ async function initPayment() {
   showSummary();
 
   try {
-    const res = await fetch(`${API_BASE}/payment/create-token`, {
+    const res = await fetch(`/api/create-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid, plan, price_id: priceId, order_id: orderId, amount, method }),
