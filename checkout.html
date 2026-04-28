@@ -86,8 +86,9 @@
       transition:all .2s;
     }
     .pay-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(13,148,136,.4)}
+    .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .pay-sec{
-      width:100%;padding:13px;border-radius:10px;border:1.5px solid #E5E7EB;
+      padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;
       background:#fff;font-size:13px;font-weight:600;cursor:pointer;
       display:flex;align-items:center;justify-content:center;gap:8px;
       font-family:inherit;color:#374151;transition:all .15s;
@@ -133,7 +134,11 @@
     <div class="plan-detail">
       <div class="plan-detail-name" id="planName">—</div>
       <div class="plan-detail-target" id="planTarget">—</div>
+
+      <!-- Opsi harga: bulanan / semester / tahunan -->
       <div class="plan-prices" id="planPrices"></div>
+
+      <!-- Fitur -->
       <div class="plan-features" id="planFeatures"></div>
     </div>
 
@@ -146,22 +151,29 @@
     <hr>
 
     <div class="pay-label">Pilih cara bayar</div>
-
-    <!-- Tombol utama: GoPay/E-Wallet -->
-    <button class="pay-primary" onclick="pay('gopay')">
+    <button class="pay-primary" onclick="pay('qris')">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="8" stroke="white" stroke-width="1.5"/>
-        <path d="M7 10l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="white" stroke-width="1.5"/>
+        <rect x="4" y="4" width="3" height="3" fill="white"/>
+        <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="white" stroke-width="1.5"/>
+        <rect x="13" y="4" width="3" height="3" fill="white"/>
+        <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="white" stroke-width="1.5"/>
+        <rect x="4" y="13" width="3" height="3" fill="white"/>
+        <rect x="11" y="11" width="3" height="3" fill="white"/>
+        <rect x="16" y="11" width="3" height="3" fill="white"/>
+        <rect x="11" y="16" width="3" height="3" fill="white"/>
+        <rect x="16" y="16" width="3" height="3" fill="white"/>
       </svg>
-      Bayar dengan GoPay / E-Wallet
+      Bayar dengan QRIS (GoPay, OVO, Dana)
     </button>
-
-    <!-- Tombol sekunder: Transfer Bank -->
-    <button class="pay-sec" onclick="pay('va')">
-      <div class="pay-icon">VA</div>
-      Transfer Bank (Mandiri, BNI, BRI, dll)
-    </button>
-
+    <div class="pay-grid">
+      <button class="pay-sec" onclick="pay('va')">
+        <div class="pay-icon">VA</div> Transfer Bank
+      </button>
+      <button class="pay-sec" onclick="pay('alfamart')">
+        <div class="pay-icon">★</div> Indomaret/Alfamart
+      </button>
+    </div>
     <p class="note">
       Pembayaran aman via <a href="https://midtrans.com" target="_blank">Midtrans</a> (lisensi Bank Indonesia).<br>
       Pro aktif &lt; 1 menit setelah bayar. Garansi refund 7 hari.
@@ -232,6 +244,7 @@ const PLANS = {
 // ── STATE ──
 const params    = new URLSearchParams(window.location.search);
 const initPlan  = params.get('plan') || 'researcher';
+// Buat uid jika tidak ada — ini penting agar tidak error di qr.html
 const uid = params.get('uid') || ('usr_' + Date.now() + '_' + Math.random().toString(36).slice(2,8));
 
 let currentPlan    = initPlan in PLANS ? initPlan : 'researcher';
@@ -239,8 +252,9 @@ let currentPriceId = 'monthly';
 
 function switchPlan(planId) {
   currentPlan = planId;
-  currentPriceId = 'monthly';
+  currentPriceId = 'monthly'; // reset ke bulanan
   renderPlan();
+  // update tab aktif
   ['scholar','researcher','dosenpro'].forEach(id => {
     document.getElementById('tab-'+id).classList.toggle('active', id === planId);
   });
@@ -290,8 +304,8 @@ function renderFeatures() {
 }
 
 function renderTotal() {
-  const p  = PLANS[currentPlan];
-  const pr = p.prices.find(x => x.id === currentPriceId);
+  const p    = PLANS[currentPlan];
+  const pr   = p.prices.find(x => x.id === currentPriceId);
   document.getElementById('totalAmount').textContent = pr.display;
 }
 
