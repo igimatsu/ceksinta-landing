@@ -315,7 +315,7 @@ function getSelectedPrice() {
 
 function pay(method) {
   const pr      = getSelectedPrice();
-  const orderId = `ceksinta_${currentPlan}_${currentPriceId}_${uid}_${Date.now()}`;
+  const orderId = `cs_${currentPlan.slice(0,3)}_${currentPriceId.slice(0,3)}_${Date.now()}`;
   const url     = `qr.html?uid=${encodeURIComponent(uid)}&plan=${currentPlan}&price_id=${currentPriceId}&order_id=${encodeURIComponent(orderId)}&amount=${pr.amount}&method=${method}`;
   window.location.href = url;
 }
